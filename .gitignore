@@ -1,0 +1,25 @@
+# 1. 忽略所有数据集和图片
+data/
+*.jpg
+*.jpeg
+*.png
+*.zip
+*.rar
+# (可选) 如果你想保留 loss_curve.png 作为展示，可以单独把这行去掉，或者改成忽略特定图片
+
+# 2. 忽略虚拟环境和 Python 缓存
+.venv/
+__pycache__/
+*.pyc
+
+# 3. 忽略模型训练产生的庞大权重文件
+*.pth
+*.pt
+*.ckpt
+
+# 4. 忽略最终生成的预测结果（通常不需要上传结果文件，只传生成结果的代码）
+submission.csv
+
+# 5. 忽略系统产生的隐藏文件 (Windows/Mac)
+.DS_Store
+Thumbs.db
