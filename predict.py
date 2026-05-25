@@ -42,8 +42,8 @@ SPECIES_IDS_CSV = 'data/species_ids.csv'
 TEST_CSV = 'data/PlantCLEF2025_test.csv'
 OUTPUT_CSV = 'submission.csv'
 
-# 每个 quadrat 预测的物种数量
-TOP_K_SPECIES = 30
+# 每个 quadrat 预测的物种数量 (v3优化: 从30增加到35以提高Recall)
+TOP_K_SPECIES = 35
 
 # ============================================================
 # 2. 加载物种信息和训练元数据
@@ -125,25 +125,29 @@ print("\n[3/6] Loading pretrained model and extracting features...")
 
 import timm
 
-# 使用已缓存的 EfficientNet-B3
-model = timm.create_model('efficientnet_b3', pretrained=True, num_classes=0)
+# v3优化: 使用更强的 ConvNeXt-Base 模型 (ImageNet-22K预训练)
+model = timm.create_model('convnext_base.fb_in22k_ft_in1k', pretrained=True, num_classes=0)
 model = model.to(device)
 model.eval()
 
 data_config = timm.data.resolve_model_data_config(model)
 transform = timm.data.create_transform(**data_config, is_training=False)
 
-# TTA transforms (多种裁剪方式)
+# TTA transforms (v3优化: 增加更多裁剪方式以提高特征鲁棒性)
 from torchvision import transforms as T
 tta_transforms = [
     transform,  # 原始
     T.Compose([T.Resize(320), T.CenterCrop(300), T.ToTensor(),
                T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
-    T.Compose([T.Resize(300), T.RandomCrop(288), T.ToTensor(),
+    T.Compose([T.Resize(280), T.CenterCrop(256), T.ToTensor(),
+               T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+    T.Compose([T.Resize(350), T.CenterCrop(300), T.ToTensor(),
+               T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
+    T.Compose([T.Resize(300), T.RandomCrop(280), T.ToTensor(),
                T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]),
 ]
 
-print(f"  Model: EfficientNet-B3, feature dim: {model.num_features}")
+print(f"  Model: ConvNeXt-Base, feature dim: {model.num_features}")
 print(f"  TTA augmentations: {len(tta_transforms)}")
 
 # 提取特征
